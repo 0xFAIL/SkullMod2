@@ -1,58 +1,10 @@
 import math
 import os
 import struct
-import winreg
-
-
-# Registry
-def get_reg_key(path, name):
-    registry_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path, 0, winreg.KEY_READ)
-    value, regtype = winreg.QueryValueEx(registry_key, name)
-    winreg.CloseKey(registry_key)
-    return value
-
-
-# Steam
-def get_steam_dir():
-    try:
-        # Get 64-bit steam dir
-        return get_reg_key('SOFTWARE\\WOW6432Node\\Valve\\Steam', 'InstallPath')
-    except WindowsError:
-        try:
-            # Get 32-bit steam dir
-            return get_reg_key('SOFTWARE\\Valve\\Steam', 'InstallPath')
-        except WindowsError:
-            return None
-
-
-# Naive parsing of libraryfolders.vdf
-def parse_libraryfolders_vdf(steam_dir):
-    libraryfolders_path = os.path.join(steam_dir, 'steamapps', 'libraryfolders.vdf')
-    library_dirs = [steam_dir]
-
-    with open(libraryfolders_path, 'r') as lf_file:
-        for line in lf_file.readlines():
-            if not line.lstrip().startswith('"'):
-                continue
-            # Get key and value
-            segments = line.split('"')
-            if len(segments) != 5 or not segments[1].isdigit():
-                continue
-            library_dirs.append(segments[3].replace('\\\\', '\\'))
-    return library_dirs
 
 
 def get_data_directory():
-    steam_dir = get_steam_dir()
-    if steam_dir is None:
-        return None
-    steam_libraries_list = parse_libraryfolders_vdf(steam_dir)
-    # Try to find the steam library with the game
-    for steam_library in steam_libraries_list:
-        if os.path.exists(os.path.join(steam_library, 'steamapps', 'appmanifest_245170.acf')):
-            return os.path.join(steam_library, 'steamapps', 'common', 'Skullgirls', 'data01')
-    return None
-
+    return '~/Library/Application Support/Steam/steamapps/common/Skullgirls/data01'
 
 def read_pascal_string(file) -> str:
     length = read_int(file, 8, False)
